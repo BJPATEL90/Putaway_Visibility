@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Putaway Visibility</title>
+  <style>
+    :root {
+      --bg: #f7f8f3;
+      --panel: #ffffff;
+      --ink: #17211b;
+      --muted: #647067;
+      --line: #dfe4dc;
+      --green: #2f7d4f;
+      --amber: #b76f15;
+      --red: #b3261e;
+      --blue: #2768a8;
+      --shadow: 0 12px 30px rgba(22, 34, 28, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+    }
+
+    .sidebar {
+      background: #1d2a22;
+      color: #f8fbf7;
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .brand strong {
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .brand span {
+      color: #bac8bd;
+      font-size: 13px;
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav button {
+      border: 0;
+      color: #dfe9e1;
+      background: transparent;
+      text-align: left;
+      padding: 11px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .nav button.active,
+    .nav button:hover {
+      background: #304336;
+      color: #fff;
+    }
+
+    .main {
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .page-title h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .page-title p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 10px 13px;
+      border-radius: 6px;
+      cursor: pointer;
+      min-height: 40px;
+    }
+
+    .btn.primary {
+      border-color: #1d2a22;
+      background: #1d2a22;
+      color: #fff;
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+      min-height: 18px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(150px, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric {
+      display: grid;
+      gap: 8px;
+      min-height: 104px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric strong {
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .metric.attention strong { color: var(--red); }
+    .metric.good strong { color: var(--green); }
+    .metric.bad strong { color: var(--amber); }
+    .metric.complete strong { color: var(--blue); }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(130px, 1fr));
+      gap: 10px;
+      align-items: end;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    select, input {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 6px;
+      padding: 10px;
+      color: var(--ink);
+      min-width: 0;
+    }
+
+    .facility-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .facility-card {
+      cursor: pointer;
+      display: grid;
+      gap: 12px;
+      transition: transform .15s ease, border-color .15s ease;
+    }
+
+    .facility-card:hover {
+      transform: translateY(-2px);
+      border-color: #9cad9f;
+    }
+
+    .facility-card h3 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .facility-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .facility-stats div {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px;
+      display: grid;
+      gap: 3px;
+    }
+
+    .facility-stats span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .facility-stats strong {
+      font-size: 18px;
+    }
+
+    .table-wrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: auto;
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1200px;
+    }
+
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 11px 12px;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    th {
+      background: #eef2ec;
+      color: #3f4b42;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr.flagged td {
+      background: #fff3f1;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill.red { background: #fde7e4; color: var(--red); }
+    .pill.green { background: #e3f3e9; color: var(--green); }
+    .pill.amber { background: #fff0d8; color: #8b520e; }
+    .pill.blue { background: #e7f0fb; color: var(--blue); }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 980px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        padding: 14px;
+      }
+
+      .nav {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
+
+      .cards {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .main {
+        padding: 16px;
+      }
+
+      .cards,
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .nav {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <strong>Putaway Visibility</strong>
+        <span>BAD inventory control dashboard</span>
+      </div>
+      <nav class="nav" aria-label="Views">
+        <button class="active" data-view="dashboard">Dashboard</button>
+        <button data-view="facilities">Facilities</button>
+        <button data-view="transactions">All Transactions</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="topbar">
+        <div class="page-title">
+          <h1 id="viewTitle">Dashboard</h1>
+          <p id="viewSubtitle">Yesterday’s putaway activity across all facilities.</p>
+        </div>
+        <div class="actions">
+          <button class="btn" id="refreshBtn">Refresh</button>
+          <button class="btn primary" id="importBtn">Import Latest Gmail Report</button>
+          <button class="btn" id="downloadBtn">Download Current View</button>
+          <div class="status" id="statusText">Data loading...</div>
+        </div>
+      </section>
+
+      <section class="toolbar">
+        <label>Date
+          <input id="dateFilter" placeholder="dd-mm-yyyy">
+        </label>
+        <label>Facility
+          <select id="facilityFilter"><option value="">All</option></select>
+        </label>
+        <label>Brand
+          <select id="brandFilter">
+            <option value="">All</option>
+            <option>ManMatters</option>
+            <option>Bodywise</option>
+            <option>LittleJoys</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>Inventory
+          <select id="inventoryFilter">
+            <option value="">All</option>
+            <option>GOOD_INVENTORY</option>
+            <option>BAD_INVENTORY</option>
+            <option>QC_REJECTED</option>
+          </select>
+        </label>
+        <label>Status
+          <select id="statusFilter">
+            <option value="">All</option>
+            <option>COMPLETE</option>
+            <option>CREATED</option>
+            <option>PENDING</option>
+          </select>
+        </label>
+        <label>Attention
+          <select id="attentionFilter">
+            <option value="">All</option>
+            <option value="YES">Required</option>
+          </select>
+        </label>
+      </section>
+
+      <section id="dashboardView">
+        <div class="cards">
+          <div class="card metric attention"><span>Attention required</span><strong id="kpiAttention">0</strong></div>
+          <div class="card metric"><span>Total transactions</span><strong id="kpiTotal">0</strong></div>
+          <div class="card metric good"><span>Good inventory</span><strong id="kpiGood">0</strong></div>
+          <div class="card metric bad"><span>Bad inventory</span><strong id="kpiBad">0</strong></div>
+          <div class="card metric complete"><span>Complete</span><strong id="kpiComplete">0</strong></div>
+        </div>
+        <div class="table-wrap" style="margin-top:14px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Facility</th>
+                <th>Created By</th>
+                <th>Putaway Item Id</th>
+                <th>SKU</th>
+                <th>Brand</th>
+                <th>Qty</th>
+                <th>Updated</th>
+                <th>Comments</th>
+              </tr>
+            </thead>
+            <tbody id="attentionRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="facilitiesView" class="hidden">
+        <div class="facility-grid" id="facilityCards"></div>
+      </section>
+
+      <section id="transactionsView" class="hidden">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Attention</th>
+                <th>Facility</th>
+                <th>Putaway Item Id</th>
+                <th>Putaway Code</th>
+                <th>Created By</th>
+                <th>Inventory</th>
+                <th>Status</th>
+                <th>SKU</th>
+                <th>Brand</th>
+                <th>Name</th>
+                <th>Qty</th>
+                <th>Updated Date</th>
+                <th>Comments</th>
+              </tr>
+            </thead>
+            <tbody id="transactionRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzc-Zif4KyjHJI4bO4Z0ePwPgBY3oIJGOeZ3iDEPK-HdIDdQG-yfFvtDhxmTBlTVMBD/exec';
+
+    const state = {
+      summary: null,
+      transactions: [],
+      currentView: 'dashboard'
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    document.querySelectorAll('.nav button').forEach((button) => {
+      button.addEventListener('click', () => setView(button.dataset.view));
+    });
+
+    ['dateFilter', 'facilityFilter', 'brandFilter', 'inventoryFilter', 'statusFilter', 'attentionFilter'].forEach((id) => {
+      $(id).addEventListener('change', refreshAll);
+    });
+
+    $('refreshBtn').addEventListener('click', refreshAll);
+    $('importBtn').addEventListener('click', importLatest);
+    $('downloadBtn').addEventListener('click', downloadCurrentView);
+    document.addEventListener('DOMContentLoaded', refreshAll);
+
+    function setView(view) {
+      state.currentView = view;
+      document.querySelectorAll('.nav button').forEach((button) => button.classList.toggle('active', button.dataset.view === view));
+      $('dashboardView').classList.toggle('hidden', view !== 'dashboard');
+      $('facilitiesView').classList.toggle('hidden', view !== 'facilities');
+      $('transactionsView').classList.toggle('hidden', view !== 'transactions');
+      $('viewTitle').textContent = view === 'dashboard' ? 'Dashboard' : view === 'facilities' ? 'Facilities' : 'All Transactions';
+      $('viewSubtitle').textContent = view === 'dashboard'
+        ? 'Yesterday’s putaway activity across all facilities.'
+        : view === 'facilities'
+          ? 'Good and bad inventory counts by facility.'
+          : 'Searchable putaway transaction list.';
+    }
+
+    async function refreshAll() {
+      setStatus('Loading data...');
+      const params = getFilters();
+      const summary = await api('summary', params);
+      const transactions = await api('transactions', params);
+      state.summary = summary;
+      state.transactions = transactions;
+      renderSummary(summary);
+      renderFacilities(summary.facilities || []);
+      renderTransactions(transactions);
+      hydrateFacilityFilter(summary.facilities || []);
+      setStatus('Updated ' + new Date().toLocaleTimeString());
+    }
+
+    async function importLatest() {
+      setStatus('Importing latest Gmail report...');
+      const result = await api('importLatest', {});
+      setStatus('Import complete: ' + result.inserted + ' new, ' + result.updated + ' updated, ' + result.flagged + ' flagged.');
+      await refreshAll();
+    }
+
+    function getFilters() {
+      return {
+        date: $('dateFilter').value.trim(),
+        facility: $('facilityFilter').value,
+        brand: $('brandFilter').value,
+        inventoryType: $('inventoryFilter').value,
+        status: $('statusFilter').value,
+        attention: $('attentionFilter').value
+      };
+    }
+
+    function api(action, params) {
+      return new Promise((resolve, reject) => {
+        const callback = 'putawayCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+        const query = new URLSearchParams({ action, callback });
+        Object.entries(params || {}).forEach(([key, value]) => {
+          if (value) query.set(key, value);
+        });
+
+        window[callback] = (payload) => {
+          delete window[callback];
+          script.remove();
+          if (!payload.ok) {
+            setStatus(payload.error || 'Request failed.');
+            reject(new Error(payload.error || 'Request failed.'));
+            return;
+          }
+          resolve(payload.data);
+        };
+
+        const script = document.createElement('script');
+        script.src = APPS_SCRIPT_URL + '?' + query.toString();
+        script.onerror = () => {
+          delete window[callback];
+          script.remove();
+          setStatus('Could not reach Apps Script.');
+          reject(new Error('Could not reach Apps Script.'));
+        };
+        document.body.appendChild(script);
+      });
+    }
+
+    function renderSummary(summary) {
+      const totals = summary.totals || {};
+      $('kpiAttention').textContent = totals.attention || 0;
+      $('kpiTotal').textContent = totals.total || 0;
+      $('kpiGood').textContent = totals.good || 0;
+      $('kpiBad').textContent = totals.bad || 0;
+      $('kpiComplete').textContent = totals.complete || 0;
+
+      $('attentionRows').innerHTML = (summary.attentionRows || []).map((row) => `
+        <tr class="flagged">
+          <td>${esc(row['Facility Name'])}</td>
+          <td>${esc(row['Created By'])}</td>
+          <td>${esc(row['Putaway Item Id'])}</td>
+          <td>${esc(row['Item Type skuCode'])}</td>
+          <td>${esc(row.Brand)}</td>
+          <td>${esc(row['Putaway Quantity'])}</td>
+          <td>${esc(row.Updated)}</td>
+          <td>${esc(row['Putaway Comments'])}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="8">No attention rows found.</td></tr>';
+    }
+
+    function renderFacilities(facilities) {
+      $('facilityCards').innerHTML = facilities.map((facility) => `
+        <article class="card facility-card" data-facility="${esc(facility.facility)}">
+          <h3>${esc(facility.facility)}</h3>
+          <div class="facility-stats">
+            <div><span>Good</span><strong>${facility.good}</strong></div>
+            <div><span>Bad</span><strong>${facility.bad}</strong></div>
+            <div><span>Action</span><strong>${facility.attention}</strong></div>
+          </div>
+        </article>
+      `).join('') || '<div class="card">No facility data found.</div>';
+
+      document.querySelectorAll('.facility-card').forEach((card) => {
+        card.addEventListener('click', () => {
+          $('facilityFilter').value = card.dataset.facility;
+          setView('transactions');
+          refreshAll();
+        });
+      });
+    }
+
+    function renderTransactions(rows) {
+      $('transactionRows').innerHTML = rows.map((row) => `
+        <tr class="${row['Attention Required'] === 'YES' ? 'flagged' : ''}">
+          <td>${attentionPill(row['Attention Required'])}</td>
+          <td>${esc(row['Facility Name'])}</td>
+          <td>${esc(row['Putaway Item Id'])}</td>
+          <td>${esc(row['Putaway Code'])}</td>
+          <td>${esc(row['Created By'])}</td>
+          <td>${inventoryPill(row['Inventory Type'])}</td>
+          <td>${statusPill(row['Status Code'])}</td>
+          <td>${esc(row['Item Type skuCode'])}</td>
+          <td>${esc(row.Brand)}</td>
+          <td>${esc(row.Name)}</td>
+          <td>${esc(row['Putaway Quantity'])}</td>
+          <td>${esc(row['Updated Date'])}</td>
+          <td>${esc(row['Putaway Comments'])}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="13">No transactions found.</td></tr>';
+    }
+
+    function hydrateFacilityFilter(facilities) {
+      const select = $('facilityFilter');
+      const current = select.value;
+      const names = facilities.map((facility) => facility.facility).sort();
+      select.innerHTML = '<option value="">All</option>' + names.map((name) => `<option>${esc(name)}</option>`).join('');
+      select.value = names.includes(current) ? current : '';
+    }
+
+    function downloadCurrentView() {
+      const rows = state.currentView === 'dashboard'
+        ? (state.summary && state.summary.attentionRows) || []
+        : state.transactions;
+      if (!rows.length) return;
+
+      const headers = Object.keys(rows[0]);
+      const csv = [headers.join(',')]
+        .concat(rows.map((row) => headers.map((header) => csvCell(row[header])).join(',')))
+        .join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'putaway-' + state.currentView + '.csv';
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function attentionPill(value) {
+      return value === 'YES' ? '<span class="pill red">Action</span>' : '<span class="pill green">Clear</span>';
+    }
+
+    function inventoryPill(value) {
+      const color = value === 'GOOD_INVENTORY' ? 'green' : value === 'BAD_INVENTORY' ? 'amber' : 'blue';
+      return `<span class="pill ${color}">${esc(value)}</span>`;
+    }
+
+    function statusPill(value) {
+      const color = value === 'COMPLETE' ? 'green' : 'blue';
+      return `<span class="pill ${color}">${esc(value)}</span>`;
+    }
+
+    function csvCell(value) {
+      const text = String(value ?? '');
+      return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+    }
+
+    function esc(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[char]);
+    }
+
+    function setStatus(message) {
+      $('statusText').textContent = message;
+    }
+  </script>
+</body>
+</html>
