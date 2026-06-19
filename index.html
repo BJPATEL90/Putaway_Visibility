@@ -303,6 +303,35 @@
     .pill.amber { background: #fff0d8; color: #8b520e; }
     .pill.blue { background: #e7f0fb; color: var(--blue); }
 
+    .product-cell {
+      display: grid;
+      gap: 3px;
+      min-width: 180px;
+    }
+
+    .product-cell strong,
+    .product-cell span,
+    .product-cell small {
+      display: block;
+      overflow-wrap: anywhere;
+      letter-spacing: 0;
+    }
+
+    .product-cell strong {
+      font-size: 13px;
+      color: var(--ink);
+    }
+
+    .product-cell span {
+      color: #3f4b42;
+      line-height: 1.25;
+    }
+
+    .product-cell small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
     .hidden { display: none !important; }
 
     @media (max-width: 980px) {
@@ -373,7 +402,7 @@
       <section class="topbar">
         <div class="page-title">
           <h1 id="viewTitle">Dashboard</h1>
-          <p id="viewSubtitle">Yesterday’s putaway activity across all facilities.</p>
+          <p id="viewSubtitle">Yesterday's putaway activity across all facilities.</p>
         </div>
         <div class="actions">
           <button class="btn" id="refreshBtn">Refresh</button>
@@ -438,7 +467,7 @@
                 <th>Facility</th>
                 <th>Created By</th>
                 <th>Putaway Item Id</th>
-                <th>SKU</th>
+                <th>Product</th>
                 <th>Brand</th>
                 <th>Qty</th>
                 <th>Updated</th>
@@ -466,9 +495,8 @@
                 <th>Created By</th>
                 <th>Inventory</th>
                 <th>Status</th>
-                <th>SKU</th>
+                <th>Product</th>
                 <th>Brand</th>
-                <th>Name</th>
                 <th>Qty</th>
                 <th>Updated Date</th>
                 <th>Comments</th>
@@ -513,7 +541,7 @@
       $('transactionsView').classList.toggle('hidden', view !== 'transactions');
       $('viewTitle').textContent = view === 'dashboard' ? 'Dashboard' : view === 'facilities' ? 'Facilities' : 'All Transactions';
       $('viewSubtitle').textContent = view === 'dashboard'
-        ? 'Yesterday’s putaway activity across all facilities.'
+        ? "Yesterday's putaway activity across all facilities."
         : view === 'facilities'
           ? 'Good and bad inventory counts by facility.'
           : 'Searchable putaway transaction list.';
@@ -593,9 +621,9 @@
       $('attentionRows').innerHTML = (summary.attentionRows || []).map((row) => `
         <tr class="flagged">
           <td>${esc(row['Facility Name'])}</td>
-          <td>${esc(row['Created By'])}</td>
+          <td>${displayUser(row['Created By'])}</td>
           <td>${esc(row['Putaway Item Id'])}</td>
-          <td>${esc(row['Item Type skuCode'])}</td>
+          <td>${productCell(row)}</td>
           <td>${esc(row.Brand)}</td>
           <td>${esc(row['Putaway Quantity'])}</td>
           <td>${esc(row.Updated)}</td>
@@ -632,17 +660,16 @@
           <td>${esc(row['Facility Name'])}</td>
           <td>${esc(row['Putaway Item Id'])}</td>
           <td>${esc(row['Putaway Code'])}</td>
-          <td>${esc(row['Created By'])}</td>
+          <td>${displayUser(row['Created By'])}</td>
           <td>${inventoryPill(row['Inventory Type'])}</td>
           <td>${statusPill(row['Status Code'])}</td>
-          <td>${esc(row['Item Type skuCode'])}</td>
+          <td>${productCell(row)}</td>
           <td>${esc(row.Brand)}</td>
-          <td>${esc(row.Name)}</td>
           <td>${esc(row['Putaway Quantity'])}</td>
           <td>${esc(row['Updated Date'])}</td>
           <td>${esc(row['Putaway Comments'])}</td>
         </tr>
-      `).join('') || '<tr><td colspan="13">No transactions found.</td></tr>';
+      `).join('') || '<tr><td colspan="12">No transactions found.</td></tr>';
     }
 
     function hydrateFacilityFilter(facilities) {
@@ -684,6 +711,21 @@
     function statusPill(value) {
       const color = value === 'COMPLETE' ? 'green' : 'blue';
       return `<span class="pill ${color}">${esc(value)}</span>`;
+    }
+
+    function displayUser(value) {
+      const text = String(value ?? '').trim();
+      return esc(text.includes('@') ? text.split('@')[0] : text);
+    }
+
+    function productCell(row) {
+      return `
+        <div class="product-cell">
+          <strong>${esc(row['Item Type skuCode'])}</strong>
+          <span>${esc(row.Name)}</span>
+          <small>${esc(row['Batch Code'] ? '#' + row['Batch Code'] : '')}</small>
+        </div>
+      `;
     }
 
     function csvCell(value) {
